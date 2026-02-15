@@ -1,22 +1,42 @@
 # --- 1. Red de Amistad Mínima (Kruskal - Greedy) ---
 def obtener_red_minima(red):
-    # Ordenar candidatos por peso (Criterio Greedy) 
+    # Ordenar todas las aristas por peso ascendente (criterio greedy)
     aristas_ordenadas = sorted(red.aristas, key=lambda x: x['peso'])
+    
+    # cada usuario comienza siendo su propio representante
     padre = {u: u for u in red.usuarios}
 
+    # Función encontrar: obtiene el representante (raíz) del conjunto
     def encontrar(i):
-        if padre[i] == i: return i
+        # Caso base: si es su propio padre, es la raíz
+        if padre[i] == i: 
+            return i
+        # Búsqueda recursiva del representante
         return encontrar(padre[i])
 
-    red_minima = []
-    costo_total = 0
+    red_minima = []      # Lista que almacenará las aristas del árbol generador mínimo
+    costo_total = 0      # Acumulador del costo total de la red mínima
+
+    # Se recorren las aristas ordenadas
     for a in aristas_ordenadas:
-        raiz_u, raiz_v = encontrar(a['u']), encontrar(a['v'])
-        if raiz_u != raiz_v: # Función de factibilidad: evita bucles 
+        # Se obtiene la raíz de cada extremo de la arista
+        raiz_u = encontrar(a['u'])
+        raiz_v = encontrar(a['v'])
+
+        # Función de factibilidad: solo unir si pertenecen a componentes distintas
+        if raiz_u != raiz_v:
+            # Unión de conjuntos: se conecta una raíz con la otra
             padre[raiz_u] = raiz_v
+            
+            # Se agrega la arista válida al resultado
             red_minima.append(a)
+            
+            # Se acumula su costo
             costo_total += a['peso']
+
+    # Resultado: conjunto mínimo de conexiones y su costo total
     return red_minima, costo_total
+
 
 # --- 2. Recomendación de Amigos (Dijkstra - Greedy) ---
 def recomendar_amigos(red, usuario_origen):
@@ -60,43 +80,62 @@ def recomendar_amigos(red, usuario_origen):
 
 # --- 3. Restauración por Bloqueo (Backtracking - Búsqueda Exhaustiva) ---
 def restaurar_red(red, candidatos):
-    componentes = red.obtener_componentes()
-    if len(componentes) == 1: return [], 0
     
-    mejor_sol = None
-    min_costo = float('inf')
+    # Se obtienen las componentes conexas actuales de la red
+    componentes = red.obtener_componentes()
+    
+    # Si ya está completamente conectada, no se necesitan nuevas conexiones
+    if len(componentes) == 1: 
+        return [], 0
+    
+    mejor_sol = None          # Mejor conjunto de conexiones encontrado
+    min_costo = float('inf')  # Mejor costo acumulado encontrado
 
+    # Función recursiva que explora combinaciones posibles
     def backtrack(idx, comps_actuales, conexiones, costo):
         nonlocal mejor_sol, min_costo
+
+        # Condición de solución: la red queda completamente conexa
         if len(comps_actuales) == 1:
+            # Si el costo es menor al mejor conocido, se actualiza
             if costo < min_costo:
                 min_costo = costo
                 mejor_sol = list(conexiones)
             return
 
+        # Se recorren los candidatos restantes a partir del índice actual
         for i in range(idx, len(candidatos)):
             u, v, p = candidatos[i]
             
-            # Buscamos a qué componente pertenece cada usuario del candidato
-            # Si el usuario no existe en la red, comp_u o comp_v serán None
+            # Determinar a qué componente pertenece cada usuario
             comp_u = next((c for c in comps_actuales if u in c), None)
             comp_v = next((c for c in comps_actuales if v in c), None)
 
-            # VALIDACIÓN: Si alguno de los usuarios no existe en la red social, 
-            # simplemente ignoramos este candidato y seguimos con el siguiente.
+            # Validación: si alguno no pertenece a la red, se descarta
             if comp_u is None or comp_v is None:
                 continue
 
+            # Solo se considera la conexión si une componentes distintas
             if comp_u != comp_v:
-                # Paso: Unificar componentes (Función de Selección Greedy aplicada a Backtracking)
-                nuevos_comps = [c for c in comps_actuales if c != comp_u and c != comp_v]
+                
+                # Se generan nuevas componentes unificando ambas
+                nuevos_comps = [
+                    c for c in comps_actuales 
+                    if c != comp_u and c != comp_v
+                ]
                 nuevos_comps.append(comp_u + comp_v)
                 
+                # Se agrega la conexión a la solución parcial
                 conexiones.append((u, v))
+                
+                # Llamada recursiva avanzando al siguiente candidato
                 backtrack(i + 1, nuevos_comps, conexiones, costo + p)
                 
-                # Retroceso (Backtrack)
+                # Retroceso: se elimina la última conexión agregada
                 conexiones.pop()
 
+    # Se inicia la exploración desde el primer candidato
     backtrack(0, componentes, [], 0)
+
+    # Retorna la mejor combinación encontrada y su costo
     return mejor_sol, min_costo

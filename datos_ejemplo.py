@@ -11,7 +11,7 @@ def crear_red_ejemplo():
     
     Representa una red universitaria con diferentes facultades y niveles de interacción.
     
-    Returns:
+    Devuelve:
         RedSocial: Red social inicializada con datos de ejemplo
     """
     red = RedSocial()

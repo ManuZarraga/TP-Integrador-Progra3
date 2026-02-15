@@ -3,7 +3,6 @@ Módulo con funciones de interfaz de usuario.
 Maneja la presentación de menús e información.
 """
 
-
 def mostrar_menu():
     """Muestra el menú principal y retorna la opción elegida."""
     print("\n" + "="*60)
