@@ -1,8 +1,8 @@
 class RedSocial:
     def __init__(self):
         self.usuarios = set()
-        self.adyacencia = {}  # Para Dijkstra
-        self.aristas = []     # Para Kruskal
+        self.adyacencia = {}  # Dijkstra
+        self.aristas = []     # Kruskal
 
     def agregar_usuario(self, u):
         if u not in self.usuarios:
